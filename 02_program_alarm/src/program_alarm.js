@@ -1,13 +1,9 @@
 const data = Deno.readTextFileSync("./data/input.txt");
 const parsedData = data.split(",").map((element) => parseInt(element));
 
-const add = (x, y) => {
-  return x + y;
-};
+const add = (x, y) => x + y;
 
-const multiply = (x, y) => {
-  return x * y;
-};
+const multiply = (x, y) => x * y;
 
 const performOperation = (data, index, operation) => {
   data[data[index + 3]] = operation(
@@ -18,10 +14,12 @@ const performOperation = (data, index, operation) => {
   return data;
 };
 
-const executeIntcode = (input) => {
+const executeIntcode = (input, part = 2) => {
   const data = [...input];
-  data[1] = 12;
-  data[2] = 2;
+  if (part === 1) {
+    data[1] = 12;
+    data[2] = 2;
+  }
 
   for (let index = 0; index < data.length; index += 4) {
     if (data[index] === 1) performOperation(data, index, add);
@@ -44,5 +42,5 @@ const findNounAndVerb = (input, target) => {
   }
 };
 
-console.log(executeIntcode(parsedData));
-// console.log(findNounAndVerb(parsedData, 19690720));
+console.log(executeIntcode(parsedData, 1));
+console.log(findNounAndVerb(parsedData, 19690720));
