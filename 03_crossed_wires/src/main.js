@@ -38,7 +38,7 @@ const getCommonPoints = (arr1, arr2) => {
   arr1.map((point1) => {
     arr2.map((point2) => {
       if (areEqual(point1, point2)) {
-        commonPoints.push(point1);
+        commonPoints.push([...point1, ...point2]);
       }
     });
   });
@@ -70,12 +70,12 @@ const getClosestIntersection = (commonPoints) => {
   let closestDistance = Infinity;
 
   commonPoints.map((point) => {
-    if (closestDistance >= point[2]) {
-      closestDistance = point[2];
+    if (closestDistance >= point[2] + point[5]) {
+      closestDistance = point[2] + point[5];
     }
   });
 
-  return closestDistance * 2;
+  return closestDistance;
 };
 
 const main = () => {
@@ -89,7 +89,7 @@ const main = () => {
   const commonPoints = getCommonPoints(wire1Points, wire2Points);
   // console.log("Common Points", commonPoints);
 
-  // console.log(getShortestPoints(commonPoints));
+  console.log(getShortestPoints(commonPoints));
   const closest = getClosestIntersection(commonPoints);
   console.log("Least moves", closest);
 };
