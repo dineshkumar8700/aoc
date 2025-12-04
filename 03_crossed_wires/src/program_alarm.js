@@ -65,15 +65,15 @@ const getShortestPoints = (points) => {
   return shortestDistance;
 };
 
-const wire1 = "R8,U5,L5,D3";
-const wire2 = "U7,R6,D4,L4";
+const main = () => {
+  // const wire1 = "R8,U5,L5,D3";
+  // const wire2 = "U7,R6,D4,L4";
+  const [wire1, wire2] = Deno.readTextFileSync("./data/input.txt").split("\n");
+  const wire1Points = getPoints(wire1);
+  const wire2Points = getPoints(wire2);
+  const commonPoints = getCommonPoints(wire1Points, wire2Points);
 
-// const [wire1, wire2] = Deno.readTextFileSync("./data/input.txt").split("\n");
+  console.log(getShortestPoints(commonPoints));
+};
 
-const wire1Points = getPoints(wire1);
-const wire2Points = getPoints(wire2);
-
-const commonsPoints = getCommonPoints(wire1Points, wire2Points);
-console.log(commonsPoints);
-
-console.log(getShortestPoints(commonsPoints));
+main();
