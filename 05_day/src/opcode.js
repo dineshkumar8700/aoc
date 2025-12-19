@@ -1,6 +1,5 @@
 const data = Deno.readTextFileSync("./data/input.txt");
 const program = data.split(",").map((element) => parseInt(element));
-const INPUT_VALUE = 1;
 let lastOutput = null;
 
 const add = (a, b) => a + b;
@@ -25,7 +24,6 @@ const getParameterValue = (memory, parameter, mode) => {
 
 const executeBinaryOp = (memory, ip, operation) => {
   const { modes } = decodeInstruction(memory[ip]);
-
   const a = getParameterValue(memory, memory[ip + 1], modes[0]);
   const b = getParameterValue(memory, memory[ip + 2], modes[1]);
   const outPos = memory[ip + 3];
@@ -35,7 +33,7 @@ const executeBinaryOp = (memory, ip, operation) => {
 
 const executeInput = (memory, ip) => {
   const outPos = memory[ip + 1];
-  memory[outPos] = INPUT_VALUE;
+  memory[outPos] = +prompt("Give Input:");
 };
 
 const executeOutput = (memory, ip) => {
@@ -45,11 +43,52 @@ const executeOutput = (memory, ip) => {
   console.log("OUTPUT:", value);
 };
 
+const opcode5 = (memory, ip) => {
+  const { modes } = decodeInstruction(memory[ip]);
+  const a = getParameterValue(memory, memory[ip + 1], modes[0]);
+  const b = getParameterValue(memory, memory[ip + 2], modes[1]);
+
+  return a ? [b, true] : [3, false];
+};
+
+const opcode6 = (memory, ip) => {
+  const { modes } = decodeInstruction(memory[ip]);
+  const a = getParameterValue(memory, memory[ip + 1], modes[0]);
+  const b = getParameterValue(memory, memory[ip + 2], modes[1]);
+
+  return a ? [3, false] : [b, true];
+};
+
+const opcode7 = (memory, ip) => {
+  const { modes } = decodeInstruction(memory[ip]);
+  const a = getParameterValue(memory, memory[ip + 1], modes[0]);
+  const b = getParameterValue(memory, memory[ip + 2], modes[1]);
+  const outPos = memory[ip + 3];
+
+  if (a < b) {
+    memory[outPos] = 1;
+  } else {
+    memory[outPos] = 0;
+  }
+};
+
+const opcode8 = (memory, ip) => {
+  const { modes } = decodeInstruction(memory[ip]);
+  const a = getParameterValue(memory, memory[ip + 1], modes[0]);
+  const b = getParameterValue(memory, memory[ip + 2], modes[1]);
+  const outPos = memory[ip + 3];
+  memory[outPos] = a === b ? 1 : 0;
+};
+
 const OPERATIONS = {
-  1: (m, ip) => (executeBinaryOp(m, ip, add), ip + 4),
-  2: (m, ip) => (executeBinaryOp(m, ip, multiply), ip + 4),
-  3: (m, ip) => (executeInput(m, ip), ip + 2),
-  4: (m, ip) => (executeOutput(m, ip), ip + 2),
+  1: (m, ip) => (executeBinaryOp(m, ip, add), 4),
+  2: (m, ip) => (executeBinaryOp(m, ip, multiply), 4),
+  3: (m, ip) => (executeInput(m, ip), 2),
+  4: (m, ip) => (executeOutput(m, ip), 2),
+  5: (m, ip) => (opcode5(m, ip)),
+  6: (m, ip) => (opcode6(m, ip)),
+  7: (m, ip) => (opcode7(m, ip), 4),
+  8: (m, ip) => (opcode8(m, ip), 4),
   99: () => null,
 };
 
@@ -57,12 +96,16 @@ const executeIntcode = (program) => {
   const memory = [...program];
   let ip = 0;
 
-  while (ip !== null) {
+  while (true) {
     const { opcode } = decodeInstruction(memory[ip]);
-    ip = OPERATIONS[opcode](memory, ip);
-  }
 
-  return lastOutput;
+    if (opcode === 99) return lastOutput;
+    if (opcode === 5 || opcode === 6) {
+      const [value, kyaKarnaHai] = OPERATIONS[opcode](memory, ip);
+      if (kyaKarnaHai) ip = value;
+      else ip += OPERATIONS[opcode](memory, ip)[0];
+    } else ip += OPERATIONS[opcode](memory, ip);
+  }
 };
 
 const diagnosticCode = executeIntcode(program);
