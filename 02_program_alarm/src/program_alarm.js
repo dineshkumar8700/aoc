@@ -10,14 +10,23 @@ const OPERATIONS = {
     updateMemory(memory, ip, multiply);
     return ip + 4;
   },
-  99: (memory, ip) => {
-    return null;
-  },
+  99: (memory, ip) => null,
 };
 
 const add = (x, y) => x + y;
 
 const multiply = (x, y) => x * y;
+
+const findNounAndVerb = (input, target) => {
+  for (let noun = 0; noun <= 99; noun++) {
+    for (let verb = 0; verb <= 99; verb++) {
+      const data = [...input];
+      data[1] = noun;
+      data[2] = verb;
+      if (executeIntcode(data) === target) return 100 * noun + verb;
+    }
+  }
+};
 
 const updateMemory = (memory, ip, operation) => {
   const input1Pos = memory[ip + 1];
@@ -49,17 +58,4 @@ const executeIntcode = (input, overrides = []) => {
 };
 
 console.log(executeIntcode(parsedData, [[1, 12], [2, 2]]));
-
-// console.log(findNounAndVerb(parsedData, 19690720));
-
-// const findNounAndVerb = (input, target) => {
-//   const data = [...input];
-
-//   for (let i = 0; i <= 99; i++) {
-//     for (let j = 0; j <= 99; j++) {
-//       data[1] = i;
-//       data[2] = j;
-//       if (executeIntcode(data) === target) return i + "" + j;
-//     }
-//   }
-// };
+console.log(findNounAndVerb(parsedData, 19690720));
