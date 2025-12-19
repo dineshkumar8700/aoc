@@ -1,79 +1,69 @@
 const data = Deno.readTextFileSync("./data/input.txt");
-const parsedData = data.split(",").map((element) => parseInt(element));
+const program = data.split(",").map((element) => parseInt(element));
+const INPUT_VALUE = 1;
+let lastOutput = null;
 
-const add = (x, y) => x + y;
+const add = (a, b) => a + b;
+const multiply = (a, b) => a * b;
 
-const multiply = (x, y) => x * y;
+const decodeInstruction = (instruction) => {
+  const str = (instruction + "").padStart(5, "0");
 
-const placeOne = (x, y) => 1;
-
-const printValue = (data, index) => {
-  console.log("From opcode 4", data[data[index + 1]]);
+  return {
+    opcode: parseInt(str.slice(3)),
+    modes: [
+      parseInt(str[2]),
+      parseInt(str[1]),
+      parseInt(str[0]),
+    ],
+  };
 };
 
-const operationOnNewOpcode = (data, index, jump, operation) => {
-  const currentElement = ("" + data[index]).padStart(5, 0);
-  let firstValue = data[data[index + 1]];
-  let secondValue = data[data[index + 2]];
+const getParameterValue = (memory, parameter, mode) => {
+  return mode === 0 ? memory[parameter] : parameter;
+};
 
-  if (currentElement[2] === "1") {
-    firstValue = data[index + 1];
+const executeBinaryOp = (memory, ip, operation) => {
+  const { modes } = decodeInstruction(memory[ip]);
+
+  const a = getParameterValue(memory, memory[ip + 1], modes[0]);
+  const b = getParameterValue(memory, memory[ip + 2], modes[1]);
+  const outPos = memory[ip + 3];
+
+  memory[outPos] = operation(a, b);
+};
+
+const executeInput = (memory, ip) => {
+  const outPos = memory[ip + 1];
+  memory[outPos] = INPUT_VALUE;
+};
+
+const executeOutput = (memory, ip) => {
+  const { modes } = decodeInstruction(memory[ip]);
+  const value = getParameterValue(memory, memory[ip + 1], modes[0]);
+  lastOutput = value;
+  console.log("OUTPUT:", value);
+};
+
+const OPERATIONS = {
+  1: (m, ip) => (executeBinaryOp(m, ip, add), ip + 4),
+  2: (m, ip) => (executeBinaryOp(m, ip, multiply), ip + 4),
+  3: (m, ip) => (executeInput(m, ip), ip + 2),
+  4: (m, ip) => (executeOutput(m, ip), ip + 2),
+  99: () => null,
+};
+
+const executeIntcode = (program) => {
+  const memory = [...program];
+  let ip = 0;
+
+  while (ip !== null) {
+    const { opcode } = decodeInstruction(memory[ip]);
+    ip = OPERATIONS[opcode](memory, ip);
   }
 
-  if (currentElement[1] === "1") {
-    secondValue = data[index + 2];
-  }
-
-  data[data[index + (jump - 1)]] = operation(firstValue, secondValue);
+  return lastOutput;
 };
 
-const performOperation = (data, index, operation, jump) => {
-  data[data[index + (jump - 1)]] = operation(
-    data[data[index + 1]],
-    data[data[index + 2]],
-  );
-};
-
-const executeIntcode = (input) => {
-  const data = [...input];
-  console.log(data);
-  let jump = 0;
-
-  for (let index = 0; index < data.length; index += jump) {
-    if (data[index] === 1) {
-      jump = 4;
-      performOperation(data, index, add, jump);
-    } else if (data[index] === 2) {
-      jump = 4;
-      performOperation(data, index, multiply, jump);
-    } else if (data[index] === 3) {
-      jump = 2;
-      performOperation(data, index, placeOne, jump);
-    } else if (data[index] === 4) {
-      jump = 2;
-      printValue(data, index);
-    } else if ((data[index] + "").length >= 4) {
-      if ((data[index] + "").slice(-2) === "01") {
-        jump = 4;
-        operationOnNewOpcode(data, index, jump, add);
-      } else if ((data[index] + "").slice(-2) === "02") {
-        jump = 4;
-        operationOnNewOpcode(data, index, jump, multiply);
-      } else if ((data[index] + "").slice(-2) === "03") {
-        jump = 2;
-        performOperation(data, index, placeOne, jump);
-      } else if ((data[index] + "").slice(-2) === "04") {
-        jump = 2;
-        printValue(data, index);
-      }
-    } else if (data[index] === 99) return data;
-  }
-  console.log("Data after operation", data);
-  return data;
-};
-
-// const temp = "3,6,4,8,1,4,6,7,4,1";
-// const parsedData = temp.split(",").map((element) => parseInt(element));
-
-executeIntcode(parsedData);
-// console.log(findNounAndVerb(parsedData, 19690720));
+const diagnosticCode = executeIntcode(program);
+console.log("Final Diagnostic Code:", diagnosticCode);
